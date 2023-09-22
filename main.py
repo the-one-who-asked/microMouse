@@ -13,7 +13,27 @@ class Mouse:
         self._y = 0
         self._orient = "n"
         self._walls = [[0 for _ in range(15)] for _ in range(15)]
-        # The underscores prefacing each attribute indicate that all the attributes in a mouse object are private and should only be manipulated by the mouse's methods
+        # The underscores prefacing each attribute indicate that they are private and should only be manipulated by the mouse's methods
+
+    @property
+    def x(self) -> int:
+        return self._x
+        # This method allows main to access x as a read-only attribute
+
+    @property
+    def y(self) -> int:
+        return self._y
+        # This method allows main to access y as a read-only attribute
+
+    @property
+    def orient(self) -> str:
+        return self._orient
+        # This method allows main to access orient as a read-only attribute
+
+    @property
+    def walls(self) -> list:
+        return self._walls
+        # This method allows main to access walls as a read-only attribute
 
     def scan(self, direction: str) -> bool:
         """Finds the distance of the nearest wall in a given direction."""
