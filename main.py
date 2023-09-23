@@ -1,7 +1,12 @@
 def sensor(direction: str) -> int:
     """Accesses a given sensor to check if there is a neighbouring wall in the direction its pointing."""
 
-    return 1
+    return False
+
+def pretty_print(map: list) -> None:
+    """A debugging tool I can use to better visualise floodmaps and walls."""
+
+    print("\n\n".join("  ".join(str(i).ljust(4) for i in row) for row in map) + "\n" * 8)
 
 
 class Mouse:
@@ -48,15 +53,15 @@ class Mouse:
         direction = direction[0].lower()
         if direction not in ("l", "f", "r"):
             raise ValueError('direction must be either "left", "forward" or "right"')
-        orient = ("n", "e", "s", "w")[("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}.get(direction, 0)]
+        orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}.get(direction, 0)) % 4]
         wall = sensor(direction)
         # Calculates the orientation of the selected sensor and if there is a neighbouring wall in that direction
 
         if wall:
             self._walls[self._y][self._x] += orient
-        # Updates the mouse's memory to store the location and orientation of the wall found
+        # Updates the mouse's memory to store the location and orientation of the wall if one is found
 
-        return distance == 0
+        return wall
         # Returns whether there is a wall directly in front of the sensor used
 
     def move(self) -> None:
@@ -78,7 +83,7 @@ class Mouse:
 
         if direction not in ("l", "r"):
             raise ValueError('direction must be either "left" or "right"')
-        self._orient = ("n", "e", "s", "w")[("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}[direction[0].lower()]]
+        self._orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}[direction[0].lower()]) % 4]
         # Changes the mouse's orientation with respect to the direction provided
 
 
@@ -88,6 +93,7 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
 
     floodmap = [[0 for _ in range(16)] for _ in range(16)]
     source = [(x, y) for y in (7, 8) for x in (7, 8)]
+    prev_source = source.copy()
     i = 0
     # Declares the necessary variables for the floodfill calculation
 
@@ -98,12 +104,13 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
         sink = []
         for (x, y) in source:
             neighbouring = [("n", (x, y+1)), ("s", (x, y-1)), ("e", (x+1, y)), ("w", (x-1, y))]
-            sink.extend([coords for (neighbour, coords) in neighbouring if neighbour not in walls[y][x]])
+            sink.extend([coords for (neighbour, coords) in neighbouring if neighbour not in walls[y][x] and all(-1 < i < 16 for i in coords) and coords not in prev_source + source])
         # The sink variable is a list of all the coordinates which neighbour (without any walls in between) a current source
 
         for (x, y) in sink:
             floodmap[y][x] = i
-        source = sink.copy()
+        prev_source = source.copy()
+        source = list(set(sink))
         # Each coordinate in the sink is given a value based on how many iterations it took to reach this coordinate.
         # This value is also inherently equal to the shortest path between a point and the original source: the destination
 
@@ -132,7 +139,7 @@ def main():
             trurns = -1
         # Finds which direction the mouse needs to move in to get one square closer to the destination
 
-        for _ in range(abs(trurns)):
+        for _ in range(abs(turns)):
             mouse.rotate("l" if turns < 0 else "r")
         mouse.move()
         # Moves the mouse one square forward in the direction previously calculated
