@@ -76,12 +76,9 @@ class Mouse:
     def rotate(self, direction: str) -> None:
         """Rotates mouse 90º in the direction specified."""
 
-        if direction[0].lower() == "l":
-            self._orient = "w"
-        elif direction[0].lower() == "r":
-            self._orient = "e"
-        else:
+        if direction not in ("l", "r"):
             raise ValueError('direction must be either "left" or "right"')
+        self._orient = ("n", "e", "s", "w")[("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}[direction[0].lower()]]
         # Changes the mouse's orientation with respect to the direction provided
 
 
@@ -94,7 +91,7 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
     i = 0
     # Declares the necessary variables for the floodfill calculation
 
-    while (mouse_x, mouse_y) not in source:
+    while (mouse_x, mouse_y) not in source or i < 2:
         # Initializes a loop to calculate the distance of each point from the destination till the distance from the mouse has been calculated
 
         i += 1
@@ -121,8 +118,24 @@ def main():
     while (mouse.x, mouse.y) not in [(x, y) for y in (7, 8) for x in (7, 8)]:
         # Initializes a loop to calculate the path of the mouse till it reaches the destination
 
+        for i in ("l", "f", "r"):
+            mouse.scan(i)
+        # Scans for neighbouring walls to the left of, in front of and to the right of the mouse
+
         floodmap = floodfill(mouse.walls, mouse.x, mouse.y)
-        neighbouring = [("n", (x, y+1)), ("s", (x, y-1)), ("e", (x+1, y)), ("w", (x-1, y))]
+        # Generates a map showing the distance of most points (including the mouse) from the destination
+
+        neighbouring = [("n", (mouse.x, mouse.y+1)), ("s", (mouse.x, mouse.y-1)), ("e", (mouse.x+1, mouse.y)), ("w", (mouse.x-1, mouse.y))]
+        move_to = [orient for orient, (x, y) in neighbouring if floodmap[y][x] == floodmap[mouse.y][mouse.x] - 1][0]
+        turns = ("n", "e", "s", "w").index(mouse.orient) - ("n", "e", "s", "w").index(move_to)
+        if turns == 3:
+            trurns = -1
+        # Finds which direction the mouse needs to move in to get one square closer to the destination
+
+        for _ in range(abs(trurns)):
+            mouse.rotate("l" if turns < 0 else "r")
+        mouse.move()
+        # Moves the mouse one square forward in the direction previously calculated
 
 
 if __name__ == "__main__":
