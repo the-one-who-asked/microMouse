@@ -3,10 +3,10 @@ def sensor(direction: str) -> int:
 
     return False
 
-def pretty_print(map: list) -> None:
+def pretty_print(arr: list) -> None:
     """A debugging tool I can use to better visualise floodmaps and walls."""
 
-    print("\n\n".join("  ".join(str(i).ljust(4) for i in row) for row in map) + "\n" * 8)
+    print("\n\n".join("  ".join(str(i).ljust(4) for i in row) for row in arr) + "\n" * 8)
 
 
 class Mouse:
@@ -97,7 +97,7 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
     i = 0
     # Declares the necessary variables for the floodfill calculation
 
-    while (mouse_x, mouse_y) not in source or i < 2:
+    while (mouse_x, mouse_y) not in source + prev_source or i < 2:
         # Initializes a loop to calculate the distance of each point from the destination till the distance from the mouse has been calculated
 
         i += 1
@@ -134,7 +134,7 @@ def main():
 
         neighbouring = [("n", (mouse.x, mouse.y+1)), ("s", (mouse.x, mouse.y-1)), ("e", (mouse.x+1, mouse.y)), ("w", (mouse.x-1, mouse.y))]
         move_to = [orient for orient, (x, y) in neighbouring if floodmap[y][x] == floodmap[mouse.y][mouse.x] - 1][0]
-        turns = ("n", "e", "s", "w").index(mouse.orient) - ("n", "e", "s", "w").index(move_to)
+        turns = ("n", "e", "s", "w").index(move_to) - ("n", "e", "s", "w").index(mouse.orient)
         if turns == 3:
             trurns = -1
         # Finds which direction the mouse needs to move in to get one square closer to the destination
@@ -143,6 +143,8 @@ def main():
             mouse.rotate("l" if turns < 0 else "r")
         mouse.move()
         # Moves the mouse one square forward in the direction previously calculated
+
+    print(mouse.trail)
 
 
 if __name__ == "__main__":
