@@ -1,7 +1,13 @@
-def sensor(direction: str) -> int:
-    """Accesses a given sensor to check if there is a neighbouring wall in the direction its pointing."""
+import requests
 
-    return False
+
+def sensor(orient: str) -> int:
+    """A mock version of a function which accesses sensors to see if there is a wall neighbouring the chosen sensor.
+    This function takes orient instead of sensor direction as an argument and gets the scan from the map of a maze."""
+
+    b_maze = open("/Users/neerajarora/Downloads/100.maz", "rb")
+    print(list(b_maze.read()))
+    b_maze.close()
 
 def pretty_print(arr: list) -> None:
     """A debugging tool I can use to better visualise floodmaps and walls."""
@@ -54,7 +60,7 @@ class Mouse:
         if direction not in ("l", "f", "r"):
             raise ValueError('direction must be either "left", "forward" or "right"')
         orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}.get(direction, 0)) % 4]
-        wall = sensor(direction)
+        wall = sensor(orient)
         # Calculates the orientation of the selected sensor and if there is a neighbouring wall in that direction
 
         if wall:
