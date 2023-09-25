@@ -1,15 +1,13 @@
-def sensor(orient: str) -> int:
+def sensor(orient: str, maze, x, y) -> bool:
     """A mock version of a function which accesses sensors to see if there is a wall neighbouring the chosen sensor.
     This function takes orient instead of sensor direction as an argument and gets the scan from the map of a maze."""
 
-    b_maze = open("/Users/neerajarora/Downloads/100.maz", "rb")
-    print(list(b_maze.read()))
-    b_maze.close()
+    return orient in maze[y][x]
+
 
 def pretty_print(arr: list) -> None:
     """A debugging tool I can use to better visualise floodmaps and walls."""
-
-    print("\n\n".join("  ".join(str(i).ljust(4) for i in row) for row in arr) + "\n" * 8)
+    print("\n\n".join("  ".join(str(i).ljust(4) for i in row) for row in arr[::-1]) + "\n" * 8)
 
 
 class Mouse:
@@ -29,7 +27,8 @@ class Mouse:
         b_maze = list(file.read())
         file.close()
         from_bin = lambda n: "".join([(n := n - val, orient)[1] for (orient, val) in [("w", 8), ("s", 4), ("e", 2), ("n", 1)] if n >= val])
-        self.b_maze = [[from_bin(i) for i in b_maze[idx1:idx2]] for (idx1, idx2) in zip(range(0, 256, 16), range(16, 272, 16))]
+        self.maze = [[from_bin(n) for n in b_maze[i: 256 + i: 16]] for i in range(16)]
+        # This loads a virtual maze from a past competition which will be used for testing and simmulation
 
     @property
     def x(self) -> int:
@@ -63,7 +62,7 @@ class Mouse:
         if direction not in ("l", "f", "r"):
             raise ValueError('direction must be either "left", "forward" or "right"')
         orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}.get(direction, 0)) % 4]
-        wall = sensor(orient)
+        wall = sensor(orient, self.maze, self.x, self.y)
         # Calculates the orientation of the selected sensor and if there is a neighbouring wall in that direction
 
         if wall:
@@ -83,7 +82,7 @@ class Mouse:
         elif self._orient == "e":
             self._x += 1
         else:
-            self._y -= 1
+            self._x -= 1
         self._trail.append(self._orient)
         # Changes the mouse's coordinates with respect to its orientation and adds movement to the mouse's trail
 
@@ -112,8 +111,8 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
         i += 1
         sink = []
         for (x, y) in source:
-            neighbouring = [("n", (x, y+1)), ("s", (x, y-1)), ("e", (x+1, y)), ("w", (x-1, y))]
-            sink.extend([coords for (neighbour, coords) in neighbouring if neighbour not in walls[y][x] and all(-1 < i < 16 for i in coords) and coords not in prev_source + source])
+            neighbouring = [("n", (x, y-1)), ("s", (x, y+1)), ("e", (x-1, y)), ("w", (x+1, y))]
+            sink.extend([coords for (neighbour, coords) in neighbouring if all(-1 < xy < 16 for xy in coords) and coords not in prev_source + source and neighbour not in walls[coords[1]][coords[0]]])
         # The sink variable is a list of all the coordinates which neighbour (without any walls in between) a current source
 
         for (x, y) in sink:
@@ -142,10 +141,12 @@ def main():
         # Generates a map showing the distance of most points (including the mouse) from the destination
 
         neighbouring = [("n", (mouse.x, mouse.y+1)), ("s", (mouse.x, mouse.y-1)), ("e", (mouse.x+1, mouse.y)), ("w", (mouse.x-1, mouse.y))]
-        move_to = [orient for orient, (x, y) in neighbouring if floodmap[y][x] == floodmap[mouse.y][mouse.x] - 1][0]
+        move_to = [orient for orient, (x, y) in neighbouring if floodmap[y][x] == floodmap[mouse.y][mouse.x] - 1 and orient not in mouse.walls[mouse.y][mouse.x]][0]
         turns = ("n", "e", "s", "w").index(move_to) - ("n", "e", "s", "w").index(mouse.orient)
         if turns == 3:
-            trurns = -1
+            turns = -1
+        if turns == -3:
+            turns = 1
         # Finds which direction the mouse needs to move in to get one square closer to the destination
 
         for _ in range(abs(turns)):
