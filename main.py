@@ -1,6 +1,3 @@
-import requests
-
-
 def sensor(orient: str) -> int:
     """A mock version of a function which accesses sensors to see if there is a wall neighbouring the chosen sensor.
     This function takes orient instead of sensor direction as an argument and gets the scan from the map of a maze."""
@@ -27,6 +24,12 @@ class Mouse:
         self._walls = [["" for _ in range(16)] for _ in range(16)]
         self._trail = []
         # The underscores prefacing each attribute indicate that they are private and should only be manipulated by the mouse's methods
+
+        file = open("100.maz", "rb")
+        b_maze = list(file.read())
+        file.close()
+        from_bin = lambda n: "".join([(n := n - val, orient)[1] for (orient, val) in [("w", 8), ("s", 4), ("e", 2), ("n", 1)] if n >= val])
+        self.b_maze = [[from_bin(i) for i in b_maze[idx1:idx2]] for (idx1, idx2) in zip(range(0, 256, 16), range(16, 272, 16))]
 
     @property
     def x(self) -> int:
