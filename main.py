@@ -1,3 +1,6 @@
+from matplotlib import pyplot as plt
+
+
 def sensor(orient: str, maze, x, y) -> bool:
     """A mock version of a function which accesses sensors to see if there is a wall neighbouring the chosen sensor.
     This function takes orient instead of sensor direction as an argument and gets the scan from the map of a maze."""
@@ -30,6 +33,9 @@ class Mouse:
         self.maze = [[from_bin(n) for n in b_maze[i: 256 + i: 16]] for i in range(16)]
         # This loads a virtual maze from a past competition which will be used for testing and simmulation
 
+        self.sim_trail = []
+        # This variable will be used to track the coordinates of the mouse to more easily make a simulation of it
+
     @property
     def x(self) -> int:
         return self._x
@@ -54,6 +60,13 @@ class Mouse:
     def trail(self) -> list:
         return self._trail
         # This method allows main to access trail as a read-only attribute
+
+    def reset(self):
+        """Resets the mouse to it's initial state in order to begin a run or another search."""
+
+        self._x = 0
+        self._y = 0
+        self._orient = "n"
 
     def scan(self, direction: str) -> bool:
         """Finds the distance of the nearest wall in a given direction."""
@@ -84,6 +97,7 @@ class Mouse:
         else:
             self._x -= 1
         self._trail.append(self._orient)
+        self.sim_trail.append((self.x, self.y))
         # Changes the mouse's coordinates with respect to its orientation and adds movement to the mouse's trail
 
     def rotate(self, direction: str) -> None:
@@ -155,6 +169,16 @@ def main():
         # Moves the mouse one square forward in the direction previously calculated
 
     print(mouse.trail)
+
+    file = open("100.txt", "r")
+    maze = [[i == " " for i in line[::2]] for line in file.read().split("\n")]
+    file.close()
+    # Opens the text version of the maze to simmulate it using matplotlib
+
+    plt.axes().set_aspect("equal")
+    plt.pcolormesh(maze[::-1])
+    plt.show()
+    # Creates a plot of the maze, providing us with a background for our simmulation
 
 
 if __name__ == "__main__":
