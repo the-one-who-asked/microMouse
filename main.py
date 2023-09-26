@@ -1,4 +1,4 @@
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 
 
 def sensor(orient: str, maze, x, y) -> bool:
@@ -10,7 +10,7 @@ def sensor(orient: str, maze, x, y) -> bool:
 
 def pretty_print(arr: list) -> None:
     """A debugging tool I can use to better visualise floodmaps and walls."""
-    print("\n\n".join("  ".join(str(i).ljust(4) for i in row) for row in arr[::-1]) + "\n" * 8)
+    print("\n".join("".join(str(i).ljust(4) for i in row) for row in arr[::-1]) + "\n" * 8)
 
 
 class Mouse:
@@ -33,7 +33,7 @@ class Mouse:
         self.maze = [[from_bin(n) for n in b_maze[i: 256 + i: 16]] for i in range(16)]
         # This loads a virtual maze from a past competition which will be used for testing and simmulation
 
-        self.sim_trail = []
+        self.sim_trail = [(0, 0)]
         # This variable will be used to track the coordinates of the mouse to more easily make a simulation of it
 
     @property
@@ -171,14 +171,19 @@ def main():
     print(mouse.trail)
 
     file = open("100.txt", "r")
-    maze = [[i == " " for i in line[::2]] for line in file.read().split("\n")]
+    maze = [([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) * 3 if j % 2 else ([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) for j, line in enumerate(file.read().split("\n"))]
+    maze = [[i for s2 in j for i in s2] for s1 in maze for j in s1]
     file.close()
     # Opens the text version of the maze to simmulate it using matplotlib
 
-    plt.axes().set_aspect("equal")
-    plt.pcolormesh(maze[::-1])
+    plt.figure()
+    for (x, y) in mouse.sim_trail:
+        plt.axes().set_aspect("equal")
+        plt.pcolormesh(maze[::-1])
+        plt.plot(4*x + 2.5, 4*y + 2.5, "ro")
+        plt.pause(0.05)
     plt.show()
-    # Creates a plot of the maze, providing us with a background for our simmulation
+    # The above code uses matplotlib to simmulate the movement of the mouse
 
 
 if __name__ == "__main__":
