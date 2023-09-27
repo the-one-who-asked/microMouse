@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from time import time
 
 
 def sensor(orient: str, maze, x, y) -> bool:
@@ -172,16 +173,18 @@ def main():
 
     file = open("100.txt", "r")
     maze = [([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) * 3 if j % 2 else ([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) for j, line in enumerate(file.read().split("\n"))]
-    maze = [[i for s2 in j for i in s2] for s1 in maze for j in s1]
+    maze = [[i for s2 in j for i in s2] for s1 in maze for j in s1][::-1]
     file.close()
     # Opens the text version of the maze to simmulate it using matplotlib
 
     plt.figure()
     for (x, y) in mouse.sim_trail:
+        st = time()
         plt.axes().set_aspect("equal")
-        plt.pcolormesh(maze[::-1])
+        plt.pcolormesh(maze)
         plt.plot(4*x + 2.5, 4*y + 2.5, "ro")
         plt.pause(0.05)
+        print(time() - st)
     plt.show()
     # The above code uses matplotlib to simmulate the movement of the mouse
 
