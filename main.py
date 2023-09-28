@@ -182,21 +182,21 @@ def run(mouse):
 
         long = False
         trail = []
+        include_next = True
         for pair in zip(prev_trail[:-1], prev_trail[1:]):
-            include_next = True
             if pair in (("n", "s"), ("s", "n"), ("w", "e"), ("e", "w")):
                 long = True
                 include_next = False
             elif include_next:
                 trail.append(pair[0])
+            else:
+                include_next = True
         # Compares each neighbouring move in the trail to see if they contradict each other, removing pairs that do
 
         prev_trail = trail + [prev_trail[-1]]
     # Removes sections of the trail where the mouse hits a dead end and turns back around
     # This shortens the trail as much as possible while being 100% sure the trail will still lead from start to end
 
-    print(mouse.trail)
-    print(trail)
     for orient in trail + [mouse.trail[-1]]:
         # Follows the shortened trail from start to finish, completing the run
 
