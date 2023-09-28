@@ -27,7 +27,7 @@ class Mouse:
         self._trail = []
         # The underscores prefacing each attribute indicate that they are private and should only be manipulated by the mouse's methods
 
-        file = open("100.maz", "rb")
+        file = open("1stworld.maz", "rb")
         b_maze = list(file.read())
         file.close()
         from_bin = lambda n: "".join([(n := n - val, orient)[1] for (orient, val) in [("w", 8), ("s", 4), ("e", 2), ("n", 1)] if n >= val])
@@ -68,6 +68,7 @@ class Mouse:
         self._x = 0
         self._y = 0
         self._orient = "n"
+        self.sim_trail = []
 
     def scan(self, direction: str) -> bool:
         """Finds the distance of the nearest wall in a given direction."""
@@ -140,10 +141,8 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
     return floodmap
 
 
-def main():
-
-    mouse = Mouse()
-    # Initializes the mouse object, containing all the methods which will in the final project be directly connected to the hardware
+def search(mouse):
+    """The search portion of the algorithm, in which the mouse explores the maze to hopefully find the optimal path."""
 
     while (mouse.x, mouse.y) not in [(x, y) for y in (7, 8) for x in (7, 8)]:
         # Initializes a loop to calculate the path of the mouse till it reaches the destination
@@ -156,7 +155,7 @@ def main():
         # Generates a map showing the distance of most points (including the mouse) from the destination
 
         neighbouring = [("n", (mouse.x, mouse.y+1)), ("s", (mouse.x, mouse.y-1)), ("e", (mouse.x+1, mouse.y)), ("w", (mouse.x-1, mouse.y))]
-        move_to = [orient for orient, (x, y) in neighbouring if floodmap[y][x] == floodmap[mouse.y][mouse.x] - 1 and orient not in mouse.walls[mouse.y][mouse.x]][0]
+        move_to = [orient for orient, (x, y) in neighbouring if -1 < x < 16 and -1 < y < 16 and floodmap[y][x] == floodmap[mouse.y][mouse.x] - 1 and orient not in mouse.walls[mouse.y][mouse.x]][0]
         turns = ("n", "e", "s", "w").index(move_to) - ("n", "e", "s", "w").index(mouse.orient)
         if turns == 3:
             turns = -1
@@ -169,7 +168,60 @@ def main():
         mouse.move()
         # Moves the mouse one square forward in the direction previously calculated
 
+
+def run(mouse):
+    """The run portion of the algorithm, in which the mouse follows the optimal path found to get to the destination as fast as possible."""
+
+    mouse.reset()
+    # Reset's the mouse's coordinates and orient to the default
+
+    long = True
+    prev_trail = mouse.trail.copy()
+    while long:
+        # Initialises a loop which will end when there are no more neighbouring moves in the trail that contradict each other
+
+        long = False
+        trail = []
+        for pair in zip(prev_trail[:-1], prev_trail[1:]):
+            include_next = True
+            if pair in (("n", "s"), ("s", "n"), ("w", "e"), ("e", "w")):
+                long = True
+                include_next = False
+            elif include_next:
+                trail.append(pair[0])
+        # Compares each neighbouring move in the trail to see if they contradict each other, removing pairs that do
+
+        prev_trail = trail + [prev_trail[-1]]
+    # Removes sections of the trail where the mouse hits a dead end and turns back around
+    # This shortens the trail as much as possible while being 100% sure the trail will still lead from start to end
+
     print(mouse.trail)
+    print(trail)
+    for orient in trail + [mouse.trail[-1]]:
+        # Follows the shortened trail from start to finish, completing the run
+
+        turns = ("n", "e", "s", "w").index(orient) - ("n", "e", "s", "w").index(mouse.orient)
+        if turns == 3:
+            turns = -1
+        if turns == -3:
+            turns = 1
+        # Finds which direction the mouse needs to move in to get one square closer to the destination
+
+        for _ in range(abs(turns)):
+            mouse.rotate("l" if turns < 0 else "r")
+        mouse.move()
+        # Moves the mouse one square forward in the direction previously calculated
+
+
+def main():
+
+    mouse = Mouse()
+    # Initialises a mouse object containing all the methods that will be accessed by the physical mouse's hardware
+
+    search(mouse)
+    mouse.reset()
+    run(mouse)
+    # Searches for the shortest path from start to finish and then runs it
 
     file = open("100.txt", "r")
     maze = [([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) * 3 if j % 2 else ([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) for j, line in enumerate(file.read().split("\n"))]
@@ -179,12 +231,10 @@ def main():
 
     plt.figure()
     for (x, y) in mouse.sim_trail:
-        st = time()
         plt.axes().set_aspect("equal")
         plt.pcolormesh(maze)
         plt.plot(4*x + 2.5, 4*y + 2.5, "ro")
         plt.pause(0.05)
-        print(time() - st)
     plt.show()
     # The above code uses matplotlib to simmulate the movement of the mouse
 
