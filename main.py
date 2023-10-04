@@ -1,17 +1,6 @@
 import matplotlib.pyplot as plt
-from time import time
-
-
-def sensor(orient: str, maze, x, y) -> bool:
-    """A mock version of a function which accesses sensors to see if there is a wall neighbouring the chosen sensor.
-    This function takes orient instead of sensor direction as an argument and gets the scan from the map of a maze."""
-
-    return orient in maze[y][x]
-
-
-def pretty_print(arr: list) -> None:
-    """A debugging tool I can use to better visualise floodmaps and walls."""
-    print("\n".join("".join(str(i).ljust(4) for i in row) for row in arr[::-1]) + "\n" * 8)
+from matplotlib.animation import FuncAnimation
+from functools import partial
 
 
 class Mouse:
@@ -77,7 +66,7 @@ class Mouse:
         if direction not in ("l", "f", "r"):
             raise ValueError('direction must be either "left", "forward" or "right"')
         orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}.get(direction, 0)) % 4]
-        wall = sensor(orient, self.maze, self.x, self.y)
+        wall = self.orient in self.maze[self.y][self.x]
         # Calculates the orientation of the selected sensor and if there is a neighbouring wall in that direction
 
         if wall:
@@ -141,7 +130,7 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int) -> list:
     return floodmap
 
 
-def search(mouse):
+def search(mouse: Mouse) -> None:
     """The search portion of the algorithm, in which the mouse explores the maze to hopefully find the optimal path."""
 
     while (mouse.x, mouse.y) not in [(x, y) for y in (7, 8) for x in (7, 8)]:
@@ -169,7 +158,7 @@ def search(mouse):
         # Moves the mouse one square forward in the direction previously calculated
 
 
-def run(mouse):
+def run(mouse: Mouse) -> None:
     """The run portion of the algorithm, in which the mouse follows the optimal path found to get to the destination as fast as possible."""
 
     mouse.reset()
@@ -211,6 +200,10 @@ def run(mouse):
             mouse.rotate("l" if turns < 0 else "r")
         mouse.move()
         # Moves the mouse one square forward in the direction previously calculated
+
+
+def update(frame):
+    """Returns the position of the mouse in each frame, which we will animate."""
 
 
 def main():
