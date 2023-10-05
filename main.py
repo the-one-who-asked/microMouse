@@ -1,6 +1,5 @@
+import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from functools import partial
 
 
 class Mouse:
@@ -66,7 +65,7 @@ class Mouse:
         if direction not in ("l", "f", "r"):
             raise ValueError('direction must be either "left", "forward" or "right"')
         orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}.get(direction, 0)) % 4]
-        wall = self.orient in self.maze[self.y][self.x]
+        wall = orient in self.maze[self.y][self.x]
         # Calculates the orientation of the selected sensor and if there is a neighbouring wall in that direction
 
         if wall:
@@ -202,10 +201,6 @@ def run(mouse: Mouse) -> None:
         # Moves the mouse one square forward in the direction previously calculated
 
 
-def update(frame):
-    """Returns the position of the mouse in each frame, which we will animate."""
-
-
 def main():
 
     mouse = Mouse()
@@ -217,17 +212,21 @@ def main():
     # Searches for the shortest path from start to finish and then runs it
 
     file = open("100.txt", "r")
-    maze = [([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) * 3 if j % 2 else ([(wall == " ",) * 3 if i % 2 else (wall == " ",) for i, wall in enumerate(line[::2])],) for j, line in enumerate(file.read().split("\n"))]
-    maze = [[i for s2 in j for i in s2] for s1 in maze for j in s1][::-1]
+    maze = [[int(wall == " ") for wall in line[::2]] for line in file.read().split("\n")[::-1]]
+    dists = np.tile([1.6, 0.4], (np.shape(maze)[0] + 1) // 2).cumsum()
     file.close()
     # Opens the text version of the maze to simmulate it using matplotlib
 
     plt.figure()
+    plt.axes().set_aspect("equal")
+    point = plt.plot(3, 3, "ro")
     for (x, y) in mouse.sim_trail:
-        plt.axes().set_aspect("equal")
-        plt.pcolormesh(maze)
-        plt.plot(4*x + 2.5, 4*y + 2.5, "ro")
+        st = time()
+        plt.pcolormesh(dists, dists, maze)
+        point[0].remove()
+        point = plt.plot(2*x + 3, 2*y + 3, "ro")
         plt.pause(0.05)
+        print(time() - st)
     plt.show()
     # The above code uses matplotlib to simmulate the movement of the mouse
 
