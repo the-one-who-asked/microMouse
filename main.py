@@ -221,12 +221,10 @@ def main():
     plt.axes().set_aspect("equal")
     point = plt.plot(3, 3, "ro")
     for (x, y) in mouse.sim_trail:
-        st = time()
         plt.pcolormesh(dists, dists, maze)
         point[0].remove()
         point = plt.plot(2*x + 3, 2*y + 3, "ro")
         plt.pause(0.05)
-        print(time() - st)
     plt.show()
     # The above code uses matplotlib to simmulate the movement of the mouse
 
