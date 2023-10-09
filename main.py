@@ -220,12 +220,10 @@ def main():
     plt.figure()
     plt.axis("equal")
     plt.axis("off")
-    bg = plt.pcolormesh(dists, dists, maze)
+    plt.pcolormesh(dists, dists, maze)
     point = plt.plot(3, 3, "ro")
     plt.pause(0.05)
     for (x, y) in mouse.sim_trail:
-        bg.remove()
-        bg = plt.pcolormesh(dists, dists, maze)
         point[0].remove()
         point = plt.plot(2*x + 3, 2*y + 3, "ro")
         plt.pause(0.05)
