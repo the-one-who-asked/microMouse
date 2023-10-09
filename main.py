@@ -218,10 +218,14 @@ def main():
     # Opens the text version of the maze to simmulate it using matplotlib
 
     plt.figure()
-    plt.axes().set_aspect("equal")
+    plt.axis("equal")
+    plt.axis("off")
+    bg = plt.pcolormesh(dists, dists, maze)
     point = plt.plot(3, 3, "ro")
+    plt.pause(0.05)
     for (x, y) in mouse.sim_trail:
-        plt.pcolormesh(dists, dists, maze)
+        bg.remove()
+        bg = plt.pcolormesh(dists, dists, maze)
         point[0].remove()
         point = plt.plot(2*x + 3, 2*y + 3, "ro")
         plt.pause(0.05)
