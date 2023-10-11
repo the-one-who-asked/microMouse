@@ -15,7 +15,7 @@ class Mouse:
         self._trail = []
         # The underscores prefacing each attribute indicate that they are private and should only be manipulated by the mouse's methods
 
-        file = open("1stworld.maz", "rb")
+        file = open("2003kankou.maz", "rb")
         b_maze = list(file.read())
         file.close()
         from_bin = lambda n: "".join([(n := n - val, orient)[1] for (orient, val) in [("w", 8), ("s", 4), ("e", 2), ("n", 1)] if n >= val])
