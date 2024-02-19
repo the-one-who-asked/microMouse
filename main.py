@@ -154,7 +154,7 @@ def search(mouse: Mouse) -> None:
         for _ in range(abs(turns)):
             mouse.rotate("l" if turns < 0 else "r")
         mouse.move()
-        # Moves the mouse one square forward in the direction previously calculated
+    # Moves the mouse one square forward in the direction previously calculated
 
 
 def run(mouse: Mouse) -> None:
@@ -223,6 +223,7 @@ def main():
     plt.pcolormesh(dists, dists, maze)
     point = plt.plot(3, 3, "ro")
     plt.pause(0.05)
+    print(len(mouse.sim_trail))
     for (x, y) in mouse.sim_trail:
         point[0].remove()
         point = plt.plot(2*x + 3, 2*y + 3, "ro")
