@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, List
 
@@ -12,7 +13,7 @@ class Mouse:
         self._x = 0
         self._y = 0
         self._orient = "n"
-        self._walls = [["" for _ in range(16)] for _ in range(16)]
+        self._walls = [["esw"] + ["w"] + [""] * 14] + [[""] * 16 for _ in range(15)]
         self._trail = []
 
         # This loads a virtual maze from a past competition which will be used for testing and simmulation
@@ -99,18 +100,6 @@ class Mouse:
             if distance != 0 and "n" not in self.walls[distance - 1][self.x]:
                 self._walls[distance - 1][self.x] += "n"
 
-    def test_scan(self) -> None:
-        square = self.maze[self.y][self.x]
-        self.walls[self.y][self.x] = square
-        if "n" in square and self.y != 15 and "s" not in self.walls[self.y + 1][self.x]:
-            self.walls[self.y + 1][self.x] += "s"
-        if "e" in square and self.x != 15 and "w" not in self.walls[self.y][self.x + 1]:
-            self.walls[self.y][self.x + 1] += "w"
-        if "s" in square and self.y != 0 and "n" not in self.walls[self.y - 1][self.x]:
-            self.walls[self.y - 1][self.x] += "n"
-        if "w" in square and self.x != 0 and "e" not in self.walls[self.y][self.x - 1]:
-            self.walls[self.y + 1][self.x] += "e"
-
     def move(self) -> None:
         """Moves mouse 1 unit square forward."""
 
@@ -129,9 +118,74 @@ class Mouse:
         """Rotates mouse 90º in the direction specified, scanning walls during this rotation"""
 
         # Changes the mouse's orientation with respect to the direction provided
-        if direction not in ("l", "r"):
-            raise ValueError('direction must be either "left" or "right"')
         self._orient = ("n", "e", "s", "w")[(("n", "e", "s", "w").index(self._orient) + {"l": -1, "r": 1}[direction[0].lower()]) % 4]
+
+        # Applies rotational scanning to the first quadrant
+        if not ((direction == "l" and self.orient == "s") or (direction == "r" and self.orient == "w")):
+            quadrant = scan([row[self.x:] for row in self.maze[self.y:]], ("n", "e", "s", "w"), 16 - self.x)
+            self._walls = self.walls[:self.y] + [a[:self.x] + b for a, b in zip(self.walls, quadrant)]
+
+        # Scans the second quadrant
+        if not ((direction == "l" and self.orient == "w") or (direction == "r" and self.orient == "n")):
+            quadrant = scan([row[self.x:] for row in self.maze[:self.y + 1][::-1]], ("s", "e", "n", "w"), 16 - self.x)[::-1]
+            self._walls = [a[:self.x] + b for a, b in zip(self.walls, quadrant)] + self.walls[self.y + 1:]
+
+        # Scans the third quadrant
+        if not ((direction == "l" and self.orient == "n") or (direction == "r" and self.orient == "e")):
+            quadrant = [row[::-1] for row in scan([row[:self.x + 1][::-1] for row in self.maze[:self.y + 1][::-1]], ("s", "w", "n", "e"), self.x + 1)[::-1]]
+            self._walls = [b + a[self.x + 1:] for a, b in zip(self.walls, quadrant)] + self.walls[self.y + 1:]
+
+        # Scans the fourth quadrant
+        if not ((direction == "l" and self.orient == "e") or (direction == "r" and self.orient == "s")):
+            quadrant = [row[::-1] for row in scan([row[:self.x + 1][::-1] for row in self.maze[self.y:]], ("n", "w", "s", "e"), self.x + 1)]
+            self._walls = self.walls[:self.y] + [b + a[self.x + 1:] for a, b in zip(self.walls, quadrant)]
+        print(self.walls)
+
+
+def add_walls(walls1: List[List[str]], walls2: List[List[str]]) -> List[List[str]]:
+    return [[a + "".join(i for i in b if i not in a) for a, b in zip(c, d)] for c, d in zip(walls1, walls2)]
+
+
+def scan(quadrant: List[List[str]], compass: Tuple[str, str, str, str], width: int, row: int = 0, start: int = 0) -> List[List[str]]:
+    corridor = quadrant[0]
+    quadrant_info = [[""] * width for _ in range(len(quadrant))]
+    dead_end = False
+    for i, square in enumerate(corridor):
+        if not dead_end:
+            if compass[0] in square:
+                quadrant_info[0][i] += compass[0]
+                if len(quadrant) != 1:
+                    quadrant_info[1][start + i] += compass[2]
+            elif len(quadrant) != 1:
+                next_start = start + i + int((start + i - 0.5) // (row + 0.5))
+                if next_start < 0:
+                    next_start = 0
+                high_gradient = False
+                if next_start >= width:
+                    high_gradient = True
+                blocks = [j + i for j, square_ in enumerate(quadrant[1][i: (width if high_gradient else next_start)]) if compass[1] in square_]
+                if blocks:
+                    quadrant_info[1][blocks[0]] += compass[1]
+                    if not high_gradient:
+                        quadrant_info[1][blocks[0] + 1] += compass[3]
+                else:
+                    next_end = start + i + 1 + int((start + i + 0.5) // (row + 0.5))
+                    tip = False
+                    if next_end > width:
+                        next_end = width - 1
+                        tip = True
+                    peek = [quadrant[1][next_start: next_end]]
+                    if not tip:
+                        peek[0][-1].replace(compass[1], "")
+                    if len(quadrant) != 2:
+                        peek += quadrant[2:]
+                    quadrant_info = [quadrant_info[0]] + add_walls(scan(peek, compass, width, row + 1, next_start), quadrant_info[1:])
+            if compass[1] in square:
+                quadrant_info[0][i] += compass[1]
+                if start + i + 1 != width:
+                    quadrant_info[0][i + 1] += compass[3]
+                dead_end = True
+    return quadrant_info
 
 
 def floodfill(walls: list, mouse_x: int, mouse_y: int, destination: List[Tuple[int, int]], orientation: str, first_run: bool) -> Tuple[int, int]:
@@ -169,7 +223,7 @@ def floodfill(walls: list, mouse_x: int, mouse_y: int, destination: List[Tuple[i
                             return direction
 
                     # Ensures there are no duplicates of each potential sink in the search
-                    elif coords not in prev_source + source + sink:
+                    elif coords not in prev_source + sink:
                         sink.append(coords)
 
         # If the mouse is reached only from a source involving no rotations, returns this source
