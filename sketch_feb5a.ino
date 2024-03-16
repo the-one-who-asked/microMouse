@@ -37,7 +37,7 @@ bool in(C coord, C* coords, int size) {
 void reorient(C new_pos) {
   // Check gyroscope
 
-  const old_pos = pos;
+  const C old_pos = pos;
   pos = new_pos;
 
   // Orientate north
